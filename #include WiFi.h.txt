@@ -1,0 +1,70 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+WebServer server(80);
+
+// Use Serial2 for communication to Arduino
+#define ARDUINO_RX 16   // ESP32 RX pin
+#define ARDUINO_TX 17   // ESP32 TX pin
+
+// ================================
+// Handle incoming direction command
+// ================================
+void handleUpdate() {
+  String dir = server.arg("dir");
+
+  Serial.print("Received direction: ");
+  Serial.println(dir);
+
+  // Send data to Arduino
+  Serial2.println(dir);
+
+  if (dir == "LEFT") {
+    Serial.println("Turning LEFT");
+  }
+  else if (dir == "RIGHT") {
+    Serial.println("Turning RIGHT");
+  }
+  else if (dir == "CENTER") {1111111111111
+    Serial.println("Going FORWARD");
+  }
+  else {
+    Serial.println("Unknown direction");
+  }
+
+  server.send(200, "text/plain", "OK");
+}
+
+// ================================
+// WiFi Setup
+// ================================
+const char* ssid = "Robot";
+const char* password = "Robot@123";
+
+void setup() {
+  Serial.begin(115200);
+
+  // Start Serial2 for Arduino communication
+  Serial2.begin(9600, SERIAL_8N1, ARDUINO_RX, ARDUINO_TX);
+
+  Serial.println("\nConnecting to WiFi...");
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(300);
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi Connected!");
+  Serial.print("ESP32 IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/update", handleUpdate);
+
+  server.begin();
+  Serial.println("HTTP Server Started");
+}
+
+void loop() {
+  server.handleClient();
+}
